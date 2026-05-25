@@ -1,59 +1,204 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
 
-    <title>AI Stock Helper</title>
+<meta charset="UTF-8">
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>AI Share Market Helper</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+    font-family: Arial;
+    background:#f2f4f7;
+    margin:0;
+    padding:0;
+}
+
+.container{
+
+    width:90%;
+    max-width:900px;
+
+    margin:auto;
+
+    margin-top:40px;
+
+    background:white;
+
+    padding:25px;
+
+    border-radius:15px;
+
+    box-shadow:0 0 10px rgba(0,0,0,0.1);
+
+}
+
+h1{
+    text-align:center;
+}
+
+.search-box{
+
+    display:flex;
+
+    justify-content:center;
+
+    gap:10px;
+
+    margin-bottom:20px;
+
+}
+
+input{
+
+    padding:12px;
+
+    width:250px;
+
+    border-radius:8px;
+
+    border:1px solid #ccc;
+
+    font-size:16px;
+
+}
+
+button{
+
+    padding:12px 20px;
+
+    border:none;
+
+    background:#007bff;
+
+    color:white;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+    font-size:16px;
+
+}
+
+button:hover{
+
+    background:#0056b3;
+
+}
+
+.card{
+
+    background:#f9fafb;
+
+    padding:20px;
+
+    border-radius:12px;
+
+    margin-top:20px;
+
+}
+
+.result-title{
+
+    font-size:24px;
+
+    margin-bottom:10px;
+
+}
+
+.green{
+    color:green;
+}
+
+.red{
+    color:red;
+}
+
+.info{
+    margin-top:10px;
+    font-size:18px;
+}
+
+canvas{
+    margin-top:30px;
+}
+
+</style>
 
 </head>
 
-<body style="font-family:Arial; text-align:center; padding:20px; background:#f5f5f5;">
+<body>
 
-    <h1>AI Stock Market Helper 📈</h1>
+<div class="container">
 
-    <input type="text" id="stockInput" placeholder="Enter Stock Symbol"
-    style="padding:10px; width:200px;">
+<h1>AI Share Market Helper 📈</h1>
 
-    <button onclick="getStock()"
-    style="padding:10px;">
-    Search
-    </button>
+<div class="search-box">
 
-    <h2 id="stockName"></h2>
+<input type="text" id="stockInput" placeholder="Enter Stock Symbol">
 
-    <h3 id="price"></h3>
+<button onclick="getStock()">Analyze</button>
 
-    <h3 id="advice"></h3>
+</div>
 
-    <p id="explanation"></p>
+<div class="card">
 
-    <canvas id="myChart" width="400" height="200"></canvas>
+<div class="result-title" id="stockName"></div>
+
+<div class="info" id="price"></div>
+
+<div class="info" id="recommendation"></div>
+
+<div class="info" id="risk"></div>
+
+<div class="info" id="buyPrice"></div>
+
+<div class="info" id="sellPrice"></div>
+
+<div class="info" id="trend"></div>
+
+<div class="info" id="explanation"></div>
+
+</div>
+
+<canvas id="myChart"></canvas>
+
+</div>
 
 <script>
 
 let chart;
 
-async function getStock() {
+async function getStock(){
 
     const symbol =
     document.getElementById("stockInput").value;
 
-    const apiKey = "EB0SRDYE7LCZFHHQ";
+    const apiKey =
+    "EB0SRDYE7LCZFHHQ";
 
     const url =
 `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${apiKey}`;
 
-    const response = await fetch(url);
+    const response =
+    await fetch(url);
 
-    const data = await response.json();
+    const data =
+    await response.json();
 
-    const timeSeries = data["Time Series (Daily)"];
+    const timeSeries =
+    data["Time Series (Daily)"];
 
     if(!timeSeries){
 
-        alert("Stock not found");
+        alert("Invalid Stock Symbol");
 
         return;
 
@@ -70,38 +215,93 @@ async function getStock() {
     const latestPrice =
     prices[prices.length - 1];
 
+    const inrPrice =
+    (latestPrice * 83).toFixed(2);
+
     document.getElementById("stockName").innerHTML =
-    "Stock: " + symbol.toUpperCase();
+    symbol.toUpperCase();
 
     document.getElementById("price").innerHTML =
-    "Current Price: $" + latestPrice;
+    "Current Price: ₹ " + inrPrice;
 
-    let advice = "";
+    let recommendation = "";
+
+    let risk = "";
+
+    let buy = "";
+
+    let sell = "";
+
+    let trend = "";
 
     let explanation = "";
 
     if(prices[6] > prices[0]){
 
-        advice =
-        "Possible Uptrend 📈 | Can Consider Buying";
+        recommendation =
+        "✅ Recommendation: BUY";
+
+        risk =
+        "Risk Level: Medium";
+
+        buy =
+        "Suggested Buy Below: ₹ " +
+        (inrPrice * 0.98).toFixed(2);
+
+        sell =
+        "Suggested Sell Near: ₹ " +
+        (inrPrice * 1.08).toFixed(2);
+
+        trend =
+        "Trend: Uptrend 📈";
 
         explanation =
-        "Graph shows rising price movement. Buyers are stronger in recent days.";
+        "The graph indicates steady upward movement. Buyers currently dominate the market sentiment.";
+
+        document.getElementById("recommendation").className =
+        "info green";
 
     }
 
-    else {
+    else{
 
-        advice =
-        "Possible Downtrend 📉 | Risky To Buy";
+        recommendation =
+        "❌ Recommendation: AVOID / SELL";
+
+        risk =
+        "Risk Level: High";
+
+        buy =
+        "Better Wait For Lower Price";
+
+        sell =
+        "Consider Selling Around Current Level";
+
+        trend =
+        "Trend: Downtrend 📉";
 
         explanation =
-        "Graph shows falling price movement. Sellers are stronger in recent days.";
+        "The graph indicates downward pressure. Sellers currently dominate market activity.";
+
+        document.getElementById("recommendation").className =
+        "info red";
 
     }
 
-    document.getElementById("advice").innerHTML =
-    advice;
+    document.getElementById("recommendation").innerHTML =
+    recommendation;
+
+    document.getElementById("risk").innerHTML =
+    risk;
+
+    document.getElementById("buyPrice").innerHTML =
+    buy;
+
+    document.getElementById("sellPrice").innerHTML =
+    sell;
+
+    document.getElementById("trend").innerHTML =
+    trend;
 
     document.getElementById("explanation").innerHTML =
     explanation;
@@ -110,30 +310,29 @@ async function getStock() {
         chart.destroy();
     }
 
-    chart = new Chart(document.getElementById("myChart"), {
+    chart =
+    new Chart(document.getElementById("myChart"),{
 
-        type: "line",
+        type:"line",
 
-        data: {
+        data:{
 
-            labels: dates,
+            labels:dates,
 
-            datasets: [{
+            datasets:[{
 
-                label: symbol.toUpperCase(),
+                label:symbol.toUpperCase(),
 
-                data: prices,
+                data:prices,
 
-                borderWidth: 3
+                borderWidth:3
 
             }]
 
         },
 
-        options: {
-
-            responsive: true
-
+        options:{
+            responsive:true
         }
 
     });
