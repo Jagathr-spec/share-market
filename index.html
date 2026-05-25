@@ -1,18 +1,122 @@
+
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>My Stock Website</title>
+
+    <title>AI Stock Helper</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
 
-<body style="font-family: Arial; text-align:center; margin-top:50px;">
+<body style="font-family:Arial; text-align:center; padding:20px;">
 
-    <h1>Stock Market Helper</h1>
+    <h1>AI Stock Market Helper</h1>
 
-    <input type="text" placeholder="Enter Stock Name">
+    <input type="text" id="stockInput" placeholder="Enter Stock Symbol">
 
-    <button>Search</button>
+    <button onclick="getStock()">Search</button>
 
-    <p>Stock result will appear here</p>
+    <h2 id="stockName"></h2>
+
+    <h3 id="price"></h3>
+
+    <h3 id="advice"></h3>
+
+    <p id="explanation"></p>
+
+    <canvas id="myChart" width="400" height="200"></canvas>
+
+<script>
+
+async function getStock() {
+
+    const symbol = document.getElementById("stockInput").value;
+
+    const apiKey = "PASTE_YOUR_API_KEY_HERE";
+
+    const url =
+`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${apiKey}`;
+
+    const response = await fetch(url);
+
+    const data = await response.json();
+
+    const timeSeries = data["Time Series (Daily)"];
+
+    if(!timeSeries){
+
+        alert("Stock not found");
+
+        return;
+
+    }
+
+    const dates = Object.keys(timeSeries).slice(0,7).reverse();
+
+    const prices = dates.map(date =>
+        parseFloat(timeSeries[date]["4. close"])
+    );
+
+    const latestPrice = prices[prices.length - 1];
+
+    document.getElementById("stockName").innerHTML =
+    "Stock: " + symbol.toUpperCase();
+
+    document.getElementById("price").innerHTML =
+    "Current Price: $" + latestPrice;
+
+    let advice = "";
+
+    let explanation = "";
+
+    if(prices[6] > prices[0]){
+
+        advice = "Possible Uptrend 📈 | Can Consider Buying";
+
+        explanation =
+        "The graph shows the stock price is increasing over recent days. Buyers are stronger.";
+
+    }
+
+    else {
+
+        advice = "Possible Downtrend 📉 | Risky To Buy";
+
+        explanation =
+        "The graph shows the stock price is decreasing. Sellers are stronger.";
+
+    }
+
+    document.getElementById("advice").innerHTML = advice;
+
+    document.getElementById("explanation").innerHTML = explanation;
+
+    new Chart(document.getElementById("myChart"), {
+
+        type: "line",
+
+        data: {
+
+            labels: dates,
+
+            datasets: [{
+
+                label: symbol,
+
+                data: prices
+
+            }]
+
+        }
+
+    });
+
+}
+
+</script>
 
 </body>
+
 </html>
