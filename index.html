@@ -1,116 +1,93 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jagath Market Pro</title>
+
+<title>AI Stock Helper Pro</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Arial,sans-serif;
-}
-
 body{
-background:#0f172a;
-color:white;
-min-height:100vh;
-padding:20px;
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:#0f172a;
+    color:white;
 }
 
 .container{
-max-width:1000px;
-margin:auto;
+    max-width:1000px;
+    margin:auto;
+    padding:20px;
 }
 
 h1{
-text-align:center;
-margin-bottom:20px;
-}
-
-.subtitle{
-text-align:center;
-color:#94a3b8;
-margin-bottom:30px;
+    text-align:center;
+    color:#38bdf8;
 }
 
 .search-box{
-display:flex;
-gap:10px;
-justify-content:center;
-margin-bottom:25px;
-flex-wrap:wrap;
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin:20px 0;
 }
 
 input{
-padding:12px;
-width:280px;
-border:none;
-border-radius:10px;
-font-size:16px;
+    width:300px;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    font-size:16px;
 }
 
 button{
-padding:12px 20px;
-border:none;
-border-radius:10px;
-background:#2563eb;
-color:white;
-font-size:16px;
-cursor:pointer;
+    padding:12px 20px;
+    border:none;
+    border-radius:10px;
+    background:#38bdf8;
+    color:white;
+    cursor:pointer;
+    font-weight:bold;
 }
 
 button:hover{
-background:#1d4ed8;
+    background:#0ea5e9;
 }
 
 .card{
-background:#1e293b;
-padding:20px;
-border-radius:15px;
-margin-top:20px;
-box-shadow:0 0 15px rgba(0,0,0,0.3);
+    background:#1e293b;
+    padding:20px;
+    border-radius:15px;
+    margin-top:20px;
 }
 
 .info{
-margin-top:10px;
-font-size:18px;
+    margin:10px 0;
+    font-size:18px;
 }
 
-.green{
-color:#22c55e;
-font-weight:bold;
+.buy{
+    color:#22c55e;
+    font-weight:bold;
 }
 
-.red{
-color:#ef4444;
-font-weight:bold;
+.sell{
+    color:#ef4444;
+    font-weight:bold;
 }
 
-.yellow{
-color:#facc15;
-font-weight:bold;
+.hold{
+    color:#facc15;
+    font-weight:bold;
 }
 
 canvas{
-margin-top:20px;
-background:white;
-border-radius:10px;
-padding:10px;
+    background:white;
+    border-radius:10px;
+    margin-top:20px;
 }
-
-.footer{
-text-align:center;
-margin-top:30px;
-color:#94a3b8;
-}
-
 </style>
 </head>
 
@@ -118,190 +95,113 @@ color:#94a3b8;
 
 <div class="container">
 
-<h1>📈 Jagath Market Pro</h1>
-
-<p class="subtitle">
-Stock Analysis Dashboard
-</p>
+<h1>📈 AI Stock Helper Pro</h1>
 
 <div class="search-box">
-
-<input
-type="text"
-id="stockInput"
-placeholder="Example: AAPL, MSFT, TSLA"
-/>
-
-<button onclick="getStock()">
-Analyze
-</button>
-
+<input id="stockInput" placeholder="Example: AAPL, TSLA, IBM">
+<button onclick="getStock()">Analyze</button>
 </div>
 
 <div class="card">
 
-<div class="info" id="stockName"></div>
+<h2 id="stockName">Stock Analysis</h2>
+
 <div class="info" id="price"></div>
-<div class="info" id="recommendation"></div>
+<div class="info" id="signal"></div>
 <div class="info" id="risk"></div>
 <div class="info" id="trend"></div>
-<div class="info" id="explanation"></div>
 
 </div>
 
-<canvas id="myChart"></canvas>
-
-<div class="footer">
-Powered by Alpha Vantage
-</div>
+<canvas id="chart"></canvas>
 
 </div>
 
 <script>
 
-let chart;
+let myChart;
 
 async function getStock(){
 
-const symbol =
-document.getElementById("stockInput")
-.value
-.trim()
-.toUpperCase();
+const symbol=document.getElementById("stockInput").value.trim();
 
 if(!symbol){
-alert("Enter a stock symbol");
+alert("Enter stock symbol");
 return;
 }
 
-const apiKey =
-"EB0SRDYE7LCZFHHQ";
+const apiKey="EB0SRDYE7LCZFHHQ";
 
-const url =
+const url=
 `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${apiKey}`;
 
 try{
 
-const response =
-await fetch(url);
+const response=await fetch(url);
+const data=await response.json();
 
-const data =
-await response.json();
+const series=data["Time Series (Daily)"];
 
-const timeSeries =
-data["Time Series (Daily)"];
-
-if(!timeSeries){
-
-alert("Stock not found or API limit reached");
-
+if(!series){
+alert("Stock not found or API limit reached.");
 return;
 }
 
-const dates =
-Object.keys(timeSeries)
-.slice(0,30)
-.reverse();
+const dates=Object.keys(series).slice(0,15).reverse();
 
-const prices =
-dates.map(date =>
-parseFloat(
-timeSeries[date]["4. close"]
-)
+const prices=dates.map(d =>
+parseFloat(series[d]["4. close"])
 );
 
-const latestPrice =
-prices[prices.length - 1];
+const latest=prices[prices.length-1];
+const first=prices[0];
 
-const avg =
-prices.reduce((a,b)=>a+b,0)
-/
-prices.length;
+document.getElementById("stockName").innerText=symbol.toUpperCase();
 
-const firstPrice =
-prices[0];
+document.getElementById("price").innerHTML=
+"Current Price: <b>$"+latest.toFixed(2)+"</b>";
 
 let signal="";
-let signalClass="";
 let risk="";
 let trend="";
-let explanation="";
 
-if(latestPrice > avg * 1.03){
+const change=((latest-first)/first)*100;
 
-signal="🟢 BUY";
-signalClass="green";
-risk="Medium";
-trend="Bullish Uptrend";
-explanation=
-"Price is above recent average and showing strength.";
-
+if(change>5){
+signal='<span class="buy">🟢 BUY</span>';
+risk='Risk: Medium';
+trend='Trend: Strong Uptrend';
 }
-
-else if(latestPrice < avg * 0.97){
-
-signal="🔴 SELL";
-signalClass="red";
-risk="High";
-trend="Bearish Downtrend";
-explanation=
-"Price is below recent average and showing weakness.";
-
+else if(change<-5){
+signal='<span class="sell">🔴 SELL</span>';
+risk='Risk: High';
+trend='Trend: Downtrend';
 }
-
 else{
-
-signal="🟡 HOLD";
-signalClass="yellow";
-risk="Medium";
-trend="Sideways";
-explanation=
-"Price is moving near the recent average.";
-
+signal='<span class="hold">🟡 HOLD</span>';
+risk='Risk: Low';
+trend='Trend: Sideways';
 }
 
-document.getElementById("stockName").innerHTML =
-"Stock: <b>" + symbol + "</b>";
+document.getElementById("signal").innerHTML=signal;
+document.getElementById("risk").innerHTML=risk;
+document.getElementById("trend").innerHTML=trend;
 
-document.getElementById("price").innerHTML =
-"Current Price: <b>" +
-latestPrice.toFixed(2) +
-"</b>";
-
-document.getElementById("recommendation").innerHTML =
-"Signal: " + signal;
-
-document.getElementById("recommendation").className =
-"info " + signalClass;
-
-document.getElementById("risk").innerHTML =
-"Risk Level: " + risk;
-
-document.getElementById("trend").innerHTML =
-"Trend: " + trend;
-
-document.getElementById("explanation").innerHTML =
-explanation;
-
-if(chart){
-chart.destroy();
+if(myChart){
+myChart.destroy();
 }
 
-chart =
-new Chart(
-document.getElementById("myChart"),
+myChart=new Chart(
+document.getElementById("chart"),
 {
 type:"line",
 data:{
 labels:dates,
-datasets:[
-{
-label:symbol,
+datasets:[{
+label:symbol.toUpperCase(),
 data:prices,
-borderWidth:3,
-fill:false
-}
-]
+borderWidth:3
+}]
 },
 options:{
 responsive:true
@@ -311,13 +211,10 @@ responsive:true
 
 }
 catch(error){
-
-alert("Error loading stock data");
-
+alert("Error loading data");
 }
 
 }
-
 </script>
 
 </body>
